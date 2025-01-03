@@ -17,25 +17,61 @@
         <h2>{{title}}</h2>
     </header>
     <section class="content">
-        <h2>Hello</h2>
-        <p>{{summary}}</p>
+        <h2>Summary</h2>
+        <p class="summary">{{summary}}</p>
         <div class="buttons">
             <button ng-click="viewSection('resume')">Resume</button>
-            <button ng-click="viewSection('projects')">Projects</button>
+            <button ng-click="viewSection('skills')">Skills</button>
+            <button ng-click="viewSection('education')">Education</button>
             <button ng-click="viewSection('contact')">Contact</button>
         </div>
         <div ng-show="currentSection === 'resume'">
-            <h3>Experience</h3>
-            <ul>
-                <li ng-repeat="job in experience">
-                    <strong>{{job.position}}</strong> at {{job.company}} <br>
-                    {{job.description}}
+            <h3>Professional Experience</h3>
+            <div class="experience-list">
+                <div class="experience-item" ng-repeat="job in experience">
+                    <div class="job-header">
+                        <h4>{{job.position}}</h4>
+                        <div class="company-info">
+                            <span class="company">{{job.company}}</span>
+                            <span class="location">{{job.location}}</span>
+                            <span class="years">{{job.years}}</span>
+                        </div>
+                    </div>
+                    <ul class="job-description">
+                        <li ng-repeat="point in job.description.split('. ')" ng-if="point">
+                            {{point + (point.endsWith('.') ? '' : '.')}}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div ng-show="currentSection === 'skills'">
+            <h3>Skills</h3>
+            <div class="skills-section" ng-repeat="skillGroup in skills">
+                <h4>{{skillGroup.category}}</h4>
+                <ul class="skills-list">
+                    <li ng-repeat="item in skillGroup.items">{{item}}</li>
+                </ul>
+            </div>
+            <h3>Languages</h3>
+            <ul class="languages-list">
+                <li ng-repeat="lang in languages">
+                    {{lang.name}} - {{lang.level}}
                 </li>
             </ul>
         </div>
-        <div ng-show="currentSection === 'projects'">
-            <h3>Projects</h3>
-            <!-- Project details here -->
+        <div ng-show="currentSection === 'education'">
+            <h3>Education</h3>
+            <div class="education">
+                <h4>{{education.school}}</h4>
+                <p>{{education.degree}}</p>
+            </div>
+            <h3>Courses</h3>
+            <ul class="courses-list">
+                <li ng-repeat="course in courses">
+                    {{course.title}} ({{course.provider}}, {{course.year}})
+                </li>
+            </ul>
         </div>
         <div ng-show="currentSection === 'contact'">
             <h3>Contact</h3>
@@ -49,4 +85,3 @@
     </footer>
 </body>
 </html>
-

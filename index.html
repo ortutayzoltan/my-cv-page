@@ -1,87 +1,286 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="resumeApp">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zoltan Ortutay Resume</title>
+    <title>Zoltan Ortutay - Interactive CV</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
-    <script src="app.js"></script>
+    <!-- p5.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <!-- ml5.js library for machine learning -->
+    <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
 </head>
-<body ng-controller="MainController">
-    <header>
-        <div class="profile-pic">
-            <img src="profile-pic.jpg" alt="Profile Picture">
-        </div>
-        <h1>{{name}}</h1>
-        <h2>{{title}}</h2>
-    </header>
-    <section class="content">
-        <h2>Summary</h2>
-        <p class="summary">{{summary}}</p>
-        <div class="buttons">
-            <button ng-click="viewSection('resume')">Resume</button>
-            <button ng-click="viewSection('skills')">Skills</button>
-            <button ng-click="viewSection('education')">Education</button>
-            <button ng-click="viewSection('contact')">Contact</button>
-        </div>
-        <div ng-show="currentSection === 'resume'">
-            <h3>Professional Experience</h3>
-            <div class="experience-list">
-                <div class="experience-item" ng-repeat="job in experience">
-                    <div class="job-header">
-                        <h4>{{job.position}}</h4>
-                        <div class="company-info">
-                            <span class="company">{{job.company}}</span>
-                            <span class="location">{{job.location}}</span>
-                            <span class="years">{{job.years}}</span>
-                        </div>
-                    </div>
-                    <ul class="job-description">
-                        <li ng-repeat="point in job.description.split('. ')" ng-if="point">
-                            {{point + (point.endsWith('.') ? '' : '.')}}
-                        </li>
-                    </ul>
+<body>
+    <!-- Canvas will be created by p5.js -->
+    <div id="canvas-container"></div>
+
+    <!-- Overlay content -->
+    <div id="content-overlay">
+        <!-- Header with profile -->
+        <header id="main-header">
+            <div class="profile-container">
+                <div class="profile-pic-wrapper">
+                    <img src="profile-pic.jpg" alt="Zoltan Ortutay" id="profile-pic">
+                    <div class="profile-ring"></div>
+                </div>
+                <div class="profile-text">
+                    <h1 class="glitch" data-text="Zoltan Zsolt Ortutay">Zoltan Zsolt Ortutay</h1>
+                    <h2 class="typing-text">Cloud-oriented Software Engineer</h2>
                 </div>
             </div>
+        </header>
+
+        <!-- Hand tracking indicator -->
+        <div id="hand-indicator" class="hidden">
+            <span class="hand-icon">👋</span>
+            <p>Wave detected! Move your hand to navigate</p>
         </div>
-        <div ng-show="currentSection === 'skills'">
-            <h3>Skills</h3>
-            <div class="skills-section" ng-repeat="skillGroup in skills">
-                <h4>{{skillGroup.category}}</h4>
-                <ul class="skills-list">
-                    <li ng-repeat="item in skillGroup.items">{{item}}</li>
-                </ul>
-            </div>
-            <h3>Languages</h3>
-            <ul class="languages-list">
-                <li ng-repeat="lang in languages">
-                    {{lang.name}} - {{lang.level}}
-                </li>
-            </ul>
-        </div>
-        <div ng-show="currentSection === 'education'">
-            <h3>Education</h3>
-            <div class="education">
-                <h4>{{education.school}}</h4>
-                <p>{{education.degree}}</p>
-            </div>
-            <h3>Courses</h3>
-            <ul class="courses-list">
-                <li ng-repeat="course in courses">
-                    {{course.title}} ({{course.provider}}, {{course.year}})
-                </li>
-            </ul>
-        </div>
-        <div ng-show="currentSection === 'contact'">
-            <h3>Contact</h3>
-            <p>Phone: {{contact.phone}}</p>
-            <p>Email: <a href="mailto:{{contact.email}}">{{contact.email}}</a></p>
-            <p>LinkedIn: <a href="{{contact.linkedin}}" target="_blank">Profile</a></p>
-        </div>
-    </section>
-    <footer>
-        <p>&copy; 2024 By Zoltan Ortutay. Powered and secured by AngularJS.</p>
-    </footer>
+
+        <!-- Navigation -->
+        <nav id="nav-buttons">
+            <button class="nav-btn" data-section="about" onclick="showSection('about')">
+                <span class="btn-icon">👤</span> About
+            </button>
+            <button class="nav-btn" data-section="experience" onclick="showSection('experience')">
+                <span class="btn-icon">💼</span> Experience
+            </button>
+            <button class="nav-btn" data-section="skills" onclick="showSection('skills')">
+                <span class="btn-icon">⚡</span> Skills
+            </button>
+            <button class="nav-btn" data-section="education" onclick="showSection('education')">
+                <span class="btn-icon">🎓</span> Education
+            </button>
+            <button class="nav-btn" data-section="contact" onclick="showSection('contact')">
+                <span class="btn-icon">📧</span> Contact
+            </button>
+        </nav>
+
+        <!-- Main content sections -->
+        <main id="main-content">
+            <!-- About Section -->
+            <section id="about-section" class="content-section active">
+                <div class="card floating-card">
+                    <h3>About Me</h3>
+                    <p class="summary">
+                        I'm a software engineer who loves diving deep into complex technical problems, especially in cloud and telecom environments.
+                        Working with large datasets and finding patterns in them is something I genuinely enjoy - it's like solving a puzzle, but with real impact.
+                        Over the years at Ericsson, I've handled hundreds of technical issues and customer escalations, and each one has taught me something new.
+                    </p>
+                    <p class="summary">
+                        While Python is my go-to for scripting and data analysis, I'm particularly fond of Erlang and its approach to functional programming.
+                        What really gets me excited is not just fixing problems, but understanding why they happened and making sure they don't come back.
+                    </p>
+                    <p class="summary">
+                        I believe in sharing knowledge - actually, I've put together quite a comprehensive knowledge base for my team.
+                        It's great seeing how sharing what we've learned helps everyone grow and makes our work more efficient.
+                        I'm always keeping an eye on new technologies and tools, especially in cloud computing - there's always something new to learn in this field.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Experience Section -->
+            <section id="experience-section" class="content-section">
+                <div class="card floating-card">
+                    <h3>Professional Experience</h3>
+
+                    <div class="experience-item">
+                        <h4>vIMS & Cloud Support Engineer</h4>
+                        <div class="job-meta">
+                            <span class="company">Ericsson</span>
+                            <span class="location">📍 Sweden</span>
+                            <span class="period">📅 Aug 2018 - Present</span>
+                        </div>
+                        <ul>
+                            <li>Resolved 300+ complex technical issues, analyzing large, semi-structured datasets from telecom operators</li>
+                            <li>Handled 100+ customer escalations and emergencies effectively</li>
+                            <li>Facilitated customer deployments and test procedures, optimizing configurations to enhance system performance</li>
+                            <li>Proficiently managed and documented issues across multiple platforms including JIRA, Salesforce and MHWeb</li>
+                            <li>Participated in diverse cross-team projects, performing various deployments and documentation validation</li>
+                            <li>Improved efficiency by developing Python/Bash scripts and fostering team learning through knowledge base development</li>
+                        </ul>
+                    </div>
+
+                    <div class="experience-item">
+                        <h4>System tester, integrator</h4>
+                        <div class="job-meta">
+                            <span class="company">Ericsson</span>
+                            <span class="location">📍 Hungary</span>
+                            <span class="period">📅 Nov 2009 - Jul 2018</span>
+                        </div>
+                        <ul>
+                            <li>Verified software packages in wire-line solutions, creating new test setups for automated and regression tests</li>
+                            <li>Developed custom scripts, tools, and plugins to optimize workflow efficiency</li>
+                            <li>Took part in 24/7 on-call duty (handling emergencies)</li>
+                            <li>Participated in on-site activities worldwide including software deployments, FOA, and troubleshooting in locations including: Amman, Cairo, Dublin, Gothenburg, Katrineholm, Kista, Malmo, Madrid, Paris, Split</li>
+                        </ul>
+                    </div>
+
+                    <div class="experience-item">
+                        <h4>Software tester</h4>
+                        <div class="job-meta">
+                            <span class="company">FlexiTon Kft</span>
+                            <span class="location">📍 Hungary</span>
+                            <span class="period">📅 May 2007 - Nov 2009</span>
+                        </div>
+                        <ul>
+                            <li>Performed functional and system testing of a telecom network designer software</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Skills Section -->
+            <section id="skills-section" class="content-section">
+                <div class="card floating-card">
+                    <h3>Skills & Technologies</h3>
+                    <p class="skill-hint">💡 Hover over skills to see them float!</p>
+
+                    <div class="skills-container">
+                        <div class="skill-category">
+                            <h4>☁️ Cloud & Infrastructure</h4>
+                            <div class="skill-tags">
+                                <span class="skill-tag">OpenStack</span>
+                                <span class="skill-tag">Kubernetes</span>
+                                <span class="skill-tag">VMware</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-category">
+                            <h4>💻 Programming & Tools</h4>
+                            <div class="skill-tags">
+                                <span class="skill-tag">Python</span>
+                                <span class="skill-tag">Erlang</span>
+                                <span class="skill-tag">Git/GitHub</span>
+                                <span class="skill-tag">SQL</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-category">
+                            <h4>📊 Monitoring & Logging</h4>
+                            <div class="skill-tags">
+                                <span class="skill-tag">ELK Stack</span>
+                                <span class="skill-tag">Troubleshooting</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-category">
+                            <h4>🌐 Protocols & Platforms</h4>
+                            <div class="skill-tags">
+                                <span class="skill-tag">SIP</span>
+                                <span class="skill-tag">H.248</span>
+                                <span class="skill-tag">Diameter</span>
+                                <span class="skill-tag">Linux</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-category">
+                            <h4>🔧 Project Tools</h4>
+                            <div class="skill-tags">
+                                <span class="skill-tag">JIRA</span>
+                                <span class="skill-tag">Salesforce</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="languages-section">
+                        <h4>🗣️ Languages</h4>
+                        <div class="language-bars">
+                            <div class="language-item">
+                                <span class="lang-name">Hungarian</span>
+                                <div class="lang-bar">
+                                    <div class="lang-fill" style="width: 100%">Native</div>
+                                </div>
+                            </div>
+                            <div class="language-item">
+                                <span class="lang-name">English</span>
+                                <div class="lang-bar">
+                                    <div class="lang-fill" style="width: 90%">Fluent</div>
+                                </div>
+                            </div>
+                            <div class="language-item">
+                                <span class="lang-name">Swedish</span>
+                                <div class="lang-bar">
+                                    <div class="lang-fill" style="width: 60%">Intermediate</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Education Section -->
+            <section id="education-section" class="content-section">
+                <div class="card floating-card">
+                    <h3>Education</h3>
+
+                    <div class="education-item">
+                        <h4>🎓 Budapest University of Technology and Economics</h4>
+                        <p class="degree">MSc, Electrical and Electronics Engineering</p>
+                    </div>
+
+                    <h3 style="margin-top: 2rem;">Courses & Certifications</h3>
+                    <div class="courses-grid">
+                        <div class="course-card">
+                            <div class="course-year">2024</div>
+                            <div class="course-title">Elasticsearch, Kibana, Logstash, Beats, APM: ELK Stack</div>
+                            <div class="course-provider">Udemy</div>
+                        </div>
+                        <div class="course-card">
+                            <div class="course-year">2024</div>
+                            <div class="course-title">The Git & Github Bootcamp</div>
+                            <div class="course-provider">Udemy</div>
+                        </div>
+                        <div class="course-card">
+                            <div class="course-year">2023</div>
+                            <div class="course-title">The Complete SQL Bootcamp</div>
+                            <div class="course-provider">Udemy</div>
+                        </div>
+                        <div class="course-card">
+                            <div class="course-year">2020</div>
+                            <div class="course-title">The Complete Python Bootcamp</div>
+                            <div class="course-provider">Udemy</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contact Section -->
+            <section id="contact-section" class="content-section">
+                <div class="card floating-card">
+                    <h3>Get In Touch</h3>
+                    <p class="contact-intro">Let's connect! Feel free to reach out through any of these channels:</p>
+
+                    <div class="contact-grid">
+                        <a href="tel:+46760013367" class="contact-card">
+                            <div class="contact-icon">📱</div>
+                            <div class="contact-label">Phone</div>
+                            <div class="contact-value">+46 76 001 3367</div>
+                        </a>
+
+                        <a href="mailto:ortutay.zoltan@gmail.com" class="contact-card">
+                            <div class="contact-icon">✉️</div>
+                            <div class="contact-label">Email</div>
+                            <div class="contact-value">ortutay.zoltan@gmail.com</div>
+                        </a>
+
+                        <a href="https://www.linkedin.com/in/zoltanortutay" target="_blank" class="contact-card">
+                            <div class="contact-icon">💼</div>
+                            <div class="contact-label">LinkedIn</div>
+                            <div class="contact-value">View Profile</div>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>✨ Interactive CV powered by p5.js & ml5.js | Wave your hand for gesture control! 👋</p>
+            <p>&copy; 2024 Zoltan Ortutay</p>
+        </footer>
+    </div>
+
+    <!-- Load the p5.js sketch -->
+    <script src="sketch.js"></script>
 </body>
 </html>
